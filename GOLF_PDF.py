@@ -221,8 +221,9 @@ class UPLIFT_REPORT_GRAPH_DATA():
 
         for col in ks_cols:
             plt.plot(time, data[col], color = ks_cols[col][-1], label=ks_cols[col][0], lw=3)
-            ks['peak'][col] = round(data[col].max(), 2)
-            ks['time'][col] = np.where(data[col] == data[col].max())[0][0]        
+            
+            ks['peak'][col] = round(data[col][:impact+60].max(), 2)
+            ks['time'][col] = np.where(data[col] == data[col][:impact+60].max())[0][0]        
             plt.axvline(time[ks['time'][col]],lw=3,color = ks_cols[col][-1], linestyle ='--', alpha= 0.7)
                 
         plt.ylabel('Angular Velocity [deg/s]')
@@ -435,6 +436,60 @@ class UPLIFT_REPORT_GRAPH_DATA():
         ax.spines['bottom'].set_visible(False)
         ax.grid(axis='y')
         plt.savefig(f"Figure/{col}_displacement.png", dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        return dis
+    
+    def pelvis_trunk_angle(data, ks_cols, time, address, top,impact):
+        dis = {
+            'address' : {},
+            'top' : {},
+            'impact': {},
+            }
+        
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        
+        for col in ks_cols:
+            df = data[col]
+            if ks_cols[col][0] == 'Lateral Tilt':
+                color = ks_cols[col][-1]
+                ax2.plot(time, df, color = ks_cols[col][-1], label=ks_cols[col][0], lw=3)
+                ax2.set_ylabel('Lateral Tilt Angle[°]', color = color)
+                ax2.tick_params(axis='y', labelcolor=color)
+            
+            else:
+                ax1.plot(time, df, color=ks_cols[col][-1], label=ks_cols[col][0], lw=3)
+                color = ks_cols[col][-1]
+            dis['address'][col]   = round(df[address], 1)
+            dis['top'][col]   = round(df[top], 1)
+            dis['impact'][col]  = round(df[impact], 1)
+                    
+        ax1.set_ylabel('Rotation Angle [°]',color = color)
+        ax1.tick_params(axis='y', labelcolor=color)
+        ax1.set_xlabel('Time [s]')
+        ax1.autoscale(axis='x', tight=True)
+        ax1.axvline(time[address], color='white', linestyle='--', alpha=0.5, lw=5)
+        ax1.axvline(time[top], color='white', linestyle='--', alpha=0.5, lw=5)
+        ax1.axvline(time[impact], color='white', linestyle='--', alpha=0.5, lw=5)
+        ax1.axhline(0, color='white', lw=0.9)
+        
+        # 여기서 df.max() 대신 적절한 값으로 변경할 필요가 있습니다.
+        ax1.text(time[address+1], y=ax1.get_ylim()[1], s='ADD', rotation=90, verticalalignment='top', horizontalalignment='left', fontsize=16)
+        ax1.text(time[top+1], y=ax1.get_ylim()[1], s='BST', rotation=90, verticalalignment='top', horizontalalignment='left', fontsize=16)
+        ax1.text(time[impact+1], y=ax1.get_ylim()[1], s='IMP', rotation=90, verticalalignment='top', horizontalalignment='left', fontsize=16)
+        
+        ax1.legend(loc=3)
+        ax2.legend(loc=4)  # 두 번째 y축 범례 위치 설정
+        
+        plt.tight_layout()
+
+        ax1.spines['right'].set_visible(False)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['bottom'].set_visible(False)
+        ax1.grid(axis='y')
+
+        plt.savefig(f"Figure/{col}_angle.png", dpi=300, bbox_inches='tight')
         plt.close()
         
         return dis
